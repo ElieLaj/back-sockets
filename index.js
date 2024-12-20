@@ -23,7 +23,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var ws_1 = require("ws");
 var node_crypto_1 = require("node:crypto");
 var SketchGameManager_1 = require("./models/SketchGameManager");
-// Initialisation du serveur et écoute sur tous les ports
 var wss = new ws_1.WebSocketServer({ port: 8081, host: "0.0.0.0" });
 // Conserve les clients connectés et autre
 var state = {
@@ -33,6 +32,7 @@ var state = {
     sketchGames: [], // Liste des parties draw en cours
     quizzes: [], // Liste des parties de quiz en cours
 };
+var connectionLimits = new Map();
 //  Gére la redirection vers les fonctions pour simplifier le code
 var messageHandlers = {
     connect: function (client, message) { return connectClient(client, message.username); },
@@ -122,14 +122,20 @@ var handleGuess = function (client, message) {
 };
 // Utilise message handler pour rediriger vers la fonction approprié
 var handleIncomingMessage = function (client, data) {
-    console.log('client: ' + client);
     try {
         var message = JSON.parse(data);
-        if (messageHandlers[message.type]) {
-            messageHandlers[message.type](client, message);
+        if (message.type && typeof message.type === 'string' && message.type.length < 50) {
+            if (message.type) {
+                // Valider les propriétés spécifiques à chaque type de message
+                console.log('Handling message:', message.type);
+                messageHandlers[message.type](client, message);
+            }
+            else {
+                console.warn("Unknown message type:", message.type);
+            }
         }
         else {
-            console.warn("Unknown message type:", message.type);
+            console.error('Invalid message type or length');
         }
     }
     catch (e) {
@@ -222,12 +228,22 @@ var handleWritting = function (client, message) {
         writtingUsers: game.writtingUsers.map(function (c) { return c.username; }),
     });
 };
-wss.on("connection", function (socket) {
-    socket.on("close", function () {
-        console.log('closing');
-        disconnectClient(socket);
-    });
-    socket.on("message", function (data) {
-        handleIncomingMessage(socket, data);
-    });
+wss.on('connection', function (socket) {
+    var ip = socket._socket.remoteAddress;
+    var currentTime = Date.now();
+    var LIMIT = 5; // Limite de 5 connexions par minute
+    if (connectionLimits.has(ip)) {
+        var _a = connectionLimits.get(ip), count = _a.count, lastTime = _a.lastTime;
+        if (currentTime - lastTime < 60000 && count >= LIMIT) {
+            socket.close(1008, 'Connection limit exceeded');
+            return;
+        }
+        connectionLimits.set(ip, {
+            count: count + 1,
+            lastTime: currentTime
+        });
+    }
+    else {
+        connectionLimits.set(ip, { count: 1, lastTime: currentTime });
+    }
 });
