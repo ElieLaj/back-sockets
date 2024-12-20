@@ -28,6 +28,9 @@ var https = require("https");
 var httpsServer = https.createServer();
 // Créer un serveur WebSocket sécurisé (wss) sur le serveur HTTPS
 var wss = new ws_1.WebSocketServer({ server: httpsServer });
+httpsServer.listen(8081, function () {
+    console.log('Server listening on wss://localhost:8081');
+});
 // Conserve les clients connectés et autre
 var state = {
     clients: [],
