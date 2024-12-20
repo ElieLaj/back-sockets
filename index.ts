@@ -14,7 +14,9 @@ const httpsServer = https.createServer();
 // Créer un serveur WebSocket sécurisé (wss) sur le serveur HTTPS
 const wss = new WebSocketServer({ server: httpsServer });
 
-
+httpsServer.listen(8081, () => {
+  console.log('Server listening on wss://localhost:8081');
+});
 
 // Conserve les clients connectés et autre
 const state: {clients: CustomWebSocket[], typingTimeouts: {}, writting: CustomWebSocket[], sketchGames: SketchGameManager[], quizzes: Game[]}  = {
