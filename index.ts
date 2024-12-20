@@ -4,24 +4,13 @@ import { CustomWebSocket, PlayerWebSocket } from "./types/websocket";
 import { ClientMessage } from "./types/messages";
 import { Game, SketchGames } from "./types/game";
 import { SketchGameManager } from "./models/SketchGameManager";
-import * as https from 'https';
-import * as fs from 'fs';
 
-// Charger les fichiers .pem
-const privateKey = fs.readFileSync('key.pem', 'utf8');
-const certificate = fs.readFileSync('cert.pem', 'utf8');
-const credentials = { key: privateKey, cert: certificate };
 
-// Créer un serveur HTTPS
-const httpsServer = https.createServer(credentials);
 
 // Créer un serveur WebSocket sécurisé (wss) sur le serveur HTTPS
-const wss = new WebSocketServer({ server: httpsServer });
+const wss = new WebSocketServer({ port: 8081, host: "0.0.0.0" });
 
-const PORT = process.env.PORT;
-httpsServer.listen(PORT, () => {
-  console.log(`WebSocket server is running on wss://localhost:${PORT}`);
-});
+
 
 // Conserve les clients connectés et autre
 const state: {clients: CustomWebSocket[], typingTimeouts: {}, writting: CustomWebSocket[], sketchGames: SketchGameManager[], quizzes: Game[]}  = {
