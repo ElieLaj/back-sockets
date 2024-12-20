@@ -228,23 +228,6 @@ const disconnectClient = (client: CustomWebSocket) => {
     state.clients = state.clients.filter((c: CustomWebSocket) => c.id !== client.id);    
 };
 
-// // Partage un message reçu à tous les utilisateurs
-// const handleMessage = (client: CustomWebSocket, message: ClientMessage) => {
-//     console.log('Message received: ', message);
-
-//     const game = state.sketchGames.find((g) => g.id === message.game);
-
-//     if (!game) {
-//       return
-//     }
-
-//     const player = game.players.find((p) => p.id === client.id );
-
-//     if (player) {
-//       game.guessWord(player, message);
-//     }
-// }
-
 // Permet d'envoyer qui écrit parmis les utilisateurs
 const handleWritting = (client: CustomWebSocket, message: ClientMessage) => {
   const game = state.sketchGames.find((g) => g.id === message.game )
@@ -283,7 +266,7 @@ const handleWritting = (client: CustomWebSocket, message: ClientMessage) => {
 wss.on('connection', (socket: CustomWebSocket) => {
   const ip = socket._socket.remoteAddress;
   const currentTime = Date.now();
-  const LIMIT = 5;  // Limite de 5 connexions par minute
+  const LIMIT = 7;  // Limite de 5 connexions par minute
 
   if (connectionLimits.has(ip)) {
     const { count, lastTime } = connectionLimits.get(ip);
@@ -300,4 +283,16 @@ wss.on('connection', (socket: CustomWebSocket) => {
   } else {
     connectionLimits.set(ip, { count: 1, lastTime: currentTime });
   }
+
+  socket.on('close', () => {
+    connectionLimits.set(ip, {
+      count: connectionLimits.get(ip).count - 1,
+      lastTime: currentTime
+    });
+    disconnectClient(socket);
+  });
+
+  socket.on('message', (data: any) => {
+    handleIncomingMessage(socket, data);
+  });
 });
