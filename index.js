@@ -23,7 +23,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var ws_1 = require("ws");
 var node_crypto_1 = require("node:crypto");
 var SketchGameManager_1 = require("./models/SketchGameManager");
-var wss = new ws_1.WebSocketServer({ port: 8081, host: "0.0.0.0" });
+var https = require("https");
+var fs = require("fs");
+// Charger les fichiers .pem
+var privateKey = fs.readFileSync('key.pem', 'utf8');
+var certificate = fs.readFileSync('cert.pem', 'utf8');
+var credentials = { key: privateKey, cert: certificate };
+// Créer un serveur HTTPS
+var httpsServer = https.createServer(credentials);
+// Créer un serveur WebSocket sécurisé (wss) sur le serveur HTTPS
+var wss = new ws_1.WebSocketServer({ server: httpsServer });
+httpsServer.listen(8081, function () {
+    console.log('WebSocket server is running on wss://localhost:8081');
+});
 // Conserve les clients connectés et autre
 var state = {
     clients: [],
