@@ -305,6 +305,14 @@ wss.on('connection', (socket: CustomWebSocket) => {
     disconnectClient(socket);
   });
 
+  socket.on('error', (error) => {
+    console.error('Socket error:', error);
+  });
+
+  socket.on('connect', () => {
+    console.log('Client connected');
+  });
+
   socket.on('message', (data: any) => {
     handleIncomingMessage(socket, data);
   });

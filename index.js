@@ -253,6 +253,12 @@ wss.on('connection', function (socket) {
         });
         disconnectClient(socket);
     });
+    socket.on('error', function (error) {
+        console.error('Socket error:', error);
+    });
+    socket.on('connect', function () {
+        console.log('Client connected');
+    });
     socket.on('message', function (data) {
         handleIncomingMessage(socket, data);
     });
