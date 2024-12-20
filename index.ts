@@ -5,8 +5,9 @@ import { ClientMessage } from "./types/messages";
 import { Game, SketchGames } from "./types/game";
 import { SketchGameManager } from "./models/SketchGameManager";
 
-// Initialisation du serveur et écoute sur tous les ports
 const wss = new WebSocketServer({ port: 8081, host: "0.0.0.0" });
+
+
 
 // Conserve les clients connectés et autre
 const state: {clients: CustomWebSocket[], typingTimeouts: {}, writting: CustomWebSocket[], sketchGames: SketchGameManager[], quizzes: Game[]}  = {
@@ -16,6 +17,8 @@ const state: {clients: CustomWebSocket[], typingTimeouts: {}, writting: CustomWe
     sketchGames: [], // Liste des parties draw en cours
     quizzes: [], // Liste des parties de quiz en cours
 };
+
+const connectionLimits = new Map();
 
 
 //  Gére la redirection vers les fonctions pour simplifier le code
@@ -122,6 +125,7 @@ const handleGetSketchGame = (client: CustomWebSocket, message: ClientMessage) =>
 };
 
 const handleLaunchSketchGame = (client: CustomWebSocket, message: ClientMessage) => {
+  
   const game = state.sketchGames.find((g) => g.id === message.game);
   if (game && game.owner.id === client.id) {
     game.startGame();
@@ -149,13 +153,19 @@ const handleGuess = (client: CustomWebSocket, message: ClientMessage) => {
 
 // Utilise message handler pour rediriger vers la fonction approprié
 const handleIncomingMessage = (client: CustomWebSocket, data: any) => {
-  console.log('client: ' + client)
   try {
     const message: ClientMessage = JSON.parse(data);
-    if (messageHandlers[message.type]) {
-      messageHandlers[message.type](client, message);
+    if (message.type && typeof message.type === 'string' && message.type.length < 50) {
+      if (message.type) {
+        // Valider les propriétés spécifiques à chaque type de message
+          console.log('Handling message:', message.type);
+          messageHandlers[message.type](client, message);
+        
+      } else {
+        console.warn("Unknown message type:", message.type);
+      }
     } else {
-      console.warn("Unknown message type:", message.type);
+      console.error('Invalid message type or length');
     }
   } catch (e) {
     console.error("Failed to parse message:", e);
@@ -270,13 +280,24 @@ const handleWritting = (client: CustomWebSocket, message: ClientMessage) => {
 };
 
 
-wss.on("connection", (socket: CustomWebSocket) => {
-  socket.on("close", () => {
-    console.log('closing')
-    disconnectClient(socket);
-  });
+wss.on('connection', (socket: CustomWebSocket) => {
+  const ip = socket._socket.remoteAddress;
+  const currentTime = Date.now();
+  const LIMIT = 5;  // Limite de 5 connexions par minute
 
-  socket.on("message", (data) => {
-    handleIncomingMessage(socket, data);
-  });
+  if (connectionLimits.has(ip)) {
+    const { count, lastTime } = connectionLimits.get(ip);
+
+    if (currentTime - lastTime < 60000 && count >= LIMIT) {
+      socket.close(1008, 'Connection limit exceeded');
+      return;
+    }
+
+    connectionLimits.set(ip, {
+      count: count + 1,
+      lastTime: currentTime
+    });
+  } else {
+    connectionLimits.set(ip, { count: 1, lastTime: currentTime });
+  }
 });
