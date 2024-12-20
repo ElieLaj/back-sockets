@@ -4,11 +4,15 @@ import { CustomWebSocket, PlayerWebSocket } from "./types/websocket";
 import { ClientMessage } from "./types/messages";
 import { Game, SketchGames } from "./types/game";
 import { SketchGameManager } from "./models/SketchGameManager";
+import * as https from 'https';
+import * as fs from 'fs';
 
 
+// Créer un serveur HTTPS
+const httpsServer = https.createServer();
 
 // Créer un serveur WebSocket sécurisé (wss) sur le serveur HTTPS
-const wss = new WebSocketServer({ port: 8081, host: "0.0.0.0" });
+const wss = new WebSocketServer({ server: httpsServer });
 
 
 
