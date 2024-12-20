@@ -18,8 +18,8 @@ const httpsServer = https.createServer(credentials);
 // Créer un serveur WebSocket sécurisé (wss) sur le serveur HTTPS
 const wss = new WebSocketServer({ server: httpsServer });
 
-httpsServer.listen(8081, () => {
-  console.log('WebSocket server is running on wss://localhost:8081');
+httpsServer.listen(443, () => {
+  console.log('WebSocket server is running on wss://localhost:443');
 });
 
 // Conserve les clients connectés et autre
