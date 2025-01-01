@@ -8,8 +8,12 @@ import * as https from 'https';
 import * as fs from 'fs';
 
 
-// Créer un serveur HTTPS
-const httpsServer = https.createServer();
+const httpsOptions = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
+
+const httpsServer = https.createServer(httpsOptions);
 
 // Créer un serveur WebSocket sécurisé (wss) sur le serveur HTTPS
 const wss = new WebSocketServer({ server: httpsServer });
@@ -272,8 +276,12 @@ const handleWritting = (client: CustomWebSocket, message: ClientMessage) => {
 };
 
 
-wss.on('connection', (socket: CustomWebSocket) => {
+wss.on('connection', (socket: CustomWebSocket, req: any) => {
   const ip = socket._socket.remoteAddress;
+
+  const protocol = req.headers['x-forwarded-proto'] || 'unknown';
+  console.log(`New connection from ${ip} via ${protocol}`);
+
   const currentTime = Date.now();
   const LIMIT = 7;  // Limite de 5 connexions par minute
 
