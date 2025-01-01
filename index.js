@@ -23,20 +23,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var ws_1 = require("ws");
 var node_crypto_1 = require("node:crypto");
 var SketchGameManager_1 = require("./models/SketchGameManager");
-var https = require("https");
-var fs = require("fs");
-// Créer un serveur HTTPS
-var httpsOptions = {
-    key: fs.readFileSync('key.pem'),
-    cert: fs.readFileSync('cert.pem')
-};
-var httpsServer = https.createServer(httpsOptions);
-// Créer un serveur WebSocket sécurisé (wss) sur le serveur HTTPS
-var wss = new ws_1.WebSocketServer({ server: httpsServer });
 var PORT = process.env.PORT || 8080;
-httpsServer.listen(PORT, function () {
-    console.log("Server listening on wss://localhost:".concat(PORT));
-});
+var wss = new ws_1.WebSocketServer({ port: PORT, host: "0.0.0.0" });
+console.log("Server listening on ws://localhost:".concat(PORT));
 // Conserve les clients connectés et autre
 var state = {
     clients: [],
@@ -229,12 +218,10 @@ var handleWritting = function (client, message) {
         writtingUsers: game.writtingUsers.map(function (c) { return c.username; }),
     });
 };
-wss.on('connection', function (socket, req) {
+wss.on('connection', function (socket) {
     var ip = socket._socket.remoteAddress;
     var currentTime = Date.now();
     var LIMIT = 7; // Limite de 5 connexions par minute
-    var protocol = req.headers['x-forwarded-proto'] || 'unknown';
-    console.log("New connection from ".concat(ip, " via ").concat(protocol));
     if (connectionLimits.has(ip)) {
         var _a = connectionLimits.get(ip), count = _a.count, lastTime = _a.lastTime;
         if (currentTime - lastTime < 60000 && count >= LIMIT) {
