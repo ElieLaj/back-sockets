@@ -5,7 +5,10 @@ import { ClientMessage } from "./types/messages";
 import { Game, SketchGames } from "./types/game";
 import { SketchGameManager } from "./models/SketchGameManager";
 
-const wss = new WebSocketServer({ port: 8081, host: "0.0.0.0" });
+const PORT = process.env.PORT || 8080;
+
+const wss = new WebSocketServer({ port: PORT, host: "0.0.0.0" });
+console.log(`Server listening on ws://localhost:${PORT}`);
 
 // Conserve les clients connectés et autre
 const state: {clients: CustomWebSocket[], typingTimeouts: {}, writting: CustomWebSocket[], sketchGames: SketchGameManager[], quizzes: Game[]}  = {
