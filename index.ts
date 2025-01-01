@@ -4,25 +4,8 @@ import { CustomWebSocket, PlayerWebSocket } from "./types/websocket";
 import { ClientMessage } from "./types/messages";
 import { Game, SketchGames } from "./types/game";
 import { SketchGameManager } from "./models/SketchGameManager";
-import * as https from 'https';
-import * as fs from 'fs';
 
-
-const httpsOptions = {
-  key: fs.readFileSync('key.pem'),
-  cert: fs.readFileSync('cert.pem')
-};
-
-const httpsServer = https.createServer(httpsOptions);
-
-// Créer un serveur WebSocket sécurisé (wss) sur le serveur HTTPS
-const wss = new WebSocketServer({ server: httpsServer });
-
-const PORT = process.env.PORT || 8081;
-
-httpsServer.listen(PORT, () => {
-  console.log(`Server listening on wss://localhost:${PORT}`);
-});
+const wss = new WebSocketServer({ port: 8081, host: "0.0.0.0" });
 
 // Conserve les clients connectés et autre
 const state: {clients: CustomWebSocket[], typingTimeouts: {}, writting: CustomWebSocket[], sketchGames: SketchGameManager[], quizzes: Game[]}  = {
@@ -278,12 +261,8 @@ const handleWritting = (client: CustomWebSocket, message: ClientMessage) => {
 };
 
 
-wss.on('connection', (socket: CustomWebSocket, req: any) => {
+wss.on('connection', (socket: CustomWebSocket) => {
   const ip = socket._socket.remoteAddress;
-
-  const protocol = req.headers['x-forwarded-proto'] || 'unknown';
-  console.log(`New connection from ${ip} via ${protocol}`);
-
   const currentTime = Date.now();
   const LIMIT = 7;  // Limite de 5 connexions par minute
 
