@@ -4,6 +4,7 @@ import { CustomWebSocket, PlayerWebSocket } from "./types/websocket";
 import { ClientMessage } from "./types/messages";
 import { Game, SketchGames } from "./types/game";
 import { SketchGameManager } from "./models/SketchGameManager";
+import { error } from "node:console";
 
 const PORT = process.env.PORT || 8080;
 
@@ -99,7 +100,27 @@ const handleJoinSketchGame = (client: CustomWebSocket, message: ClientMessage) =
   const player: PlayerWebSocket = Object.assign(client, { score: 0 });
 
   if (game && !game.players.find((p) => p.id === player.id)) {
-    game.addPlayer(player);
+    if (game.players.find((p) => p.username === player.username)) {
+      client.send(
+        JSON.stringify({
+          sender: "server",
+          type: "joinSketchGame",
+          state: "usernameTaken",
+          success: false,
+          error: "Username already taken",
+        })
+      );
+    } else {
+      client.send(
+        JSON.stringify({
+          sender: "server",
+          type: "joinSketchGame",
+          success: true,
+          ...game.getGameInfo()
+        })
+      );
+      game.addPlayer(player);
+    }
   }
 };
 

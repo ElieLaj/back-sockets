@@ -88,7 +88,19 @@ var handleJoinSketchGame = function (client, message) {
     var game = state.sketchGames.find(function (g) { return g.id === message.game; });
     var player = Object.assign(client, { score: 0 });
     if (game && !game.players.find(function (p) { return p.id === player.id; })) {
-        game.addPlayer(player);
+        if (game.players.find(function (p) { return p.username === player.username; })) {
+            client.send(JSON.stringify({
+                sender: "server",
+                type: "joinSketchGame",
+                state: "usernameTaken",
+                success: false,
+                error: "Username already taken",
+            }));
+        }
+        else {
+            client.send(JSON.stringify(__assign({ sender: "server", type: "joinSketchGame", success: true }, game.getGameInfo())));
+            game.addPlayer(player);
+        }
     }
 };
 var handleGetSketchGame = function (client, message) {
