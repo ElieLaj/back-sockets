@@ -38,7 +38,7 @@ var connectionLimits = new Map();
 //  Gére la redirection vers les fonctions pour simplifier le code
 var messageHandlers = {
     connect: function (client, message) { return connectClient(client, message.username); },
-    // message: (client: CustomWebSocket, message: ClientMessage) => handleMessage(client, message),
+    changeUsername: function (client, message) { return changeUsername(client, message.username); },
     writting: function (client, message) { return handleWritting(client, message); },
     createSketchGame: function (client, message) { return handleCreateSketchGame(client); },
     joinSketchGame: function (client, message) { return handleJoinSketchGame(client, message); },
@@ -172,6 +172,26 @@ var connectClient = function (client, username) {
         users: __spreadArray(__spreadArray([], state.clients.map(function (c) { return c.username; }), true), [username], false).filter(function (u, i, a) { return a.indexOf(u) === i; }),
     }));
     console.log('Clients:', state.clients.map(function (c) { return c.username; }));
+};
+var changeUsername = function (client, username) {
+    if (state.clients.find(function (c) { return c.username === username; })) {
+        return client.send(JSON.stringify({
+            sender: "server",
+            value: "Username already taken",
+            type: "changeUsername",
+            success: false,
+        }));
+    }
+    client.username = username;
+    var stateClientIndex = state.clients.findIndex(function (c) { return c.id === client.id; });
+    state.clients[stateClientIndex] = client;
+    client.send(JSON.stringify({
+        sender: "server",
+        value: "Username changed successfully",
+        type: "changeUsername",
+        success: true,
+        users: __spreadArray(__spreadArray([], state.clients.map(function (c) { return c.username; }), true), [username], false).filter(function (u, i, a) { return a.indexOf(u) === i; }),
+    }));
 };
 // Déconnecte un utilisateur en le retirant du state
 var disconnectClient = function (client) {
