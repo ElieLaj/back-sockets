@@ -189,6 +189,7 @@ var changeUsername = function (client, username) {
         sender: "server",
         value: "Username changed successfully",
         type: "changeUsername",
+        username: username,
         success: true,
         users: __spreadArray(__spreadArray([], state.clients.map(function (c) { return c.username; }), true), [username], false).filter(function (u, i, a) { return a.indexOf(u) === i; }),
     }));

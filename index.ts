@@ -229,6 +229,7 @@ const changeUsername = (client: CustomWebSocket, username: string) => {
       sender: "server",
       value: "Username changed successfully",
       type: "changeUsername",
+      username: username,
       success: true,
       users: [...state.clients.map((c: CustomWebSocket) => c.username), username].filter((u, i, a) => a.indexOf(u) === i),
   }));
