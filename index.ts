@@ -4,9 +4,6 @@ import { CustomWebSocket, PlayerWebSocket } from "./types/websocket";
 import { ClientMessage } from "./types/messages";
 import { Game, SketchGames } from "./types/game";
 import { SketchGameManager } from "./models/SketchGameManager";
-import * as https from 'https';
-import * as fs from 'fs';
-
 
 const PORT = process.env.PORT || 8080;
 
@@ -28,7 +25,7 @@ const connectionLimits = new Map();
 //  Gére la redirection vers les fonctions pour simplifier le code
 const messageHandlers = {
   connect: (client: CustomWebSocket, message: ClientMessage) => connectClient(client, message.username),
-  // message: (client: CustomWebSocket, message: ClientMessage) => handleMessage(client, message),
+  changeUsername: (client: CustomWebSocket, message: ClientMessage) => changeUsername(client, message.username),
   writting: (client: CustomWebSocket, message: ClientMessage) => handleWritting(client, message),
   createSketchGame: (client: CustomWebSocket, message: ClientMessage) => handleCreateSketchGame(client),
   joinSketchGame: (client: CustomWebSocket, message: ClientMessage) => handleJoinSketchGame(client, message),
@@ -209,6 +206,32 @@ const connectClient = (client: CustomWebSocket, username: string) => {
     }));
 
     console.log('Clients:', state.clients.map((c: CustomWebSocket) => c.username));
+}
+
+const changeUsername = (client: CustomWebSocket, username: string) => {
+  if (state.clients.find((c: CustomWebSocket) => c.username === username)) {
+    return client.send(JSON.stringify({
+      sender: "server",
+      value: "Username already taken",
+      type: "changeUsername",
+      success: false,
+    }));
+  }
+
+  client.username = username;
+
+  const stateClientIndex = state.clients.findIndex((c: CustomWebSocket) => c.id === client.id);
+
+  state.clients[stateClientIndex] = client;
+    
+
+  client.send(JSON.stringify({
+      sender: "server",
+      value: "Username changed successfully",
+      type: "changeUsername",
+      success: true,
+      users: [...state.clients.map((c: CustomWebSocket) => c.username), username].filter((u, i, a) => a.indexOf(u) === i),
+  }));
 }
 
 // Déconnecte un utilisateur en le retirant du state
