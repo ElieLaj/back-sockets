@@ -131,11 +131,14 @@ export class SketchGameManager implements SketchGames {
             }
         }
 
-        if (this.players.length === 0) {
-            return;
-        } else if (this.players.length === 1) {
-            this.endGame();
+        if (this.state !== 'waiting') {
+            if (this.players.length === 0) {
+                return;
+            } else if (this.players.length === 1) {
+                this.endGame();
+            }
         }
+        
 
         if (player.id === this.owner.id) {
             this.owner = this.players[0];
